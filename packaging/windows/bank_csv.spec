@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_submodules
 
 project_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd()))
 frontend_dist = project_root / "frontend" / "dist"
@@ -32,13 +33,7 @@ a = Analysis(
     pathex=[str(project_root)],
     binaries=[],
     datas=datas,
-    hiddenimports=[
-        "uvicorn",
-        "uvicorn.main",
-        "uvicorn.config",
-        "uvicorn.logging",
-        "uvicorn.loops",
-    ],
+    hiddenimports=collect_submodules("uvicorn"),
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
