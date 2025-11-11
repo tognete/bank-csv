@@ -1,8 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
+import os
 
-project_root = Path.cwd()
+project_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd()))
 frontend_dist = project_root / "frontend" / "dist"
 input_dir = project_root / "Input"
 vendor_root = project_root / "vendor"
@@ -24,7 +25,7 @@ for name, path in vendor_targets.items():
 block_cipher = None
 
 a = Analysis(
-    ["launcher.py"],
+    [str(project_root / "launcher.py")],
     pathex=[str(project_root)],
     binaries=[],
     datas=datas,
