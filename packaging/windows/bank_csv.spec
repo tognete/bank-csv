@@ -1,11 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 project_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd()))
 frontend_dist = project_root / "frontend" / "dist"
 input_dir = project_root / "Input"
+backend_dir = project_root / "backend"
 vendor_root = project_root / "vendor"
 
 datas = []
@@ -13,6 +14,8 @@ if frontend_dist.exists():
     datas.append((str(frontend_dist), "frontend/dist"))
 if input_dir.exists():
     datas.append((str(input_dir), "Input"))
+if backend_dir.exists():
+    datas.append((str(backend_dir), "backend"))
 
 vendor_targets = {
     "tesseract": vendor_root / "tesseract",
@@ -29,7 +32,13 @@ a = Analysis(
     pathex=[str(project_root)],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=[
+        "uvicorn",
+        "uvicorn.main",
+        "uvicorn.config",
+        "uvicorn.logging",
+        "uvicorn.loops",
+    ],
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
