@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parents[2]
+project_root = Path.cwd()
 frontend_dist = project_root / "frontend" / "dist"
 input_dir = project_root / "Input"
 vendor_root = project_root / "vendor"
