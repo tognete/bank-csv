@@ -45,7 +45,9 @@ def configure_vendor_binaries():
         prepend_path(tesseract_dir)
         tessdata = tesseract_dir / "tessdata"
         if tessdata.exists():
-            os.environ.setdefault("TESSDATA_PREFIX", str(tesseract_dir))
+            # Point Tesseract directly at the tessdata folder so packaged builds
+            # don't depend on a system-wide installation.
+            os.environ["TESSDATA_PREFIX"] = str(tessdata)
 
     poppler_dir = vendor_dir / "poppler"
     poppler_bin = poppler_dir / "bin"

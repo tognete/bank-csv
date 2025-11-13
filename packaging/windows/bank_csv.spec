@@ -30,7 +30,7 @@ block_cipher = None
 
 a = Analysis(
     [str(project_root / "launcher.py")],
-    pathex=[str(project_root)],
+    pathex=[str(project_root), str(project_root / "backend")],
     binaries=[],
     datas=datas,
     hiddenimports=collect_submodules("uvicorn"),
@@ -53,7 +53,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,

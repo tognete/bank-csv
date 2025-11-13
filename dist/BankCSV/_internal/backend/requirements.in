@@ -1,0 +1,15 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.30,<0.31
+pydantic>=2.9,<2.10
+pydantic-settings>=2.6,<2.7
+python-dotenv>=1.0,<2.0
+python-multipart>=0.0.9,<0.1
+pandas>=2.2,<2.3
+numpy>=2.0,<3.0
+opencv-python>=4.10,<4.11
+pillow>=10.4,<11.0
+pdfplumber>=0.11,<0.12
+pdf2image>=1.17,<1.18
+pdfminer.six>=20231228,<20250000
+pytesseract>=0.3.10,<0.4
+watchfiles>=0.24,<0.25

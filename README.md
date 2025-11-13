@@ -32,6 +32,8 @@ backend/.venv/bin/pip install -r backend/requirements.txt
 PYTHONPATH=backend backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+> Dependencies live in `backend/requirements.in`. Edit that file and run `pip-compile backend/requirements.in` (pip-tools) to regenerate `backend/requirements.txt` with fully pinned versions when you need a reproducible build.
+
 ### API
 
 - `POST /api/extract` – multipart upload (`file`) → JSON payload containing CSV, columns, rows, notes.
@@ -70,42 +72,50 @@ backend\.venv\Scripts\uvicorn app.main:app --port 8000
 
 ## Packaging a Windows-friendly build
 
-The repo includes a helper script that builds the React frontend, copies only the runtime assets, and produces a `release/windows/bank-csv.zip` bundle with start scripts.
+`scripts/build_windows.ps1` is the single entry point for all Windows deliverables. Run it from an elevated PowerShell prompt (recommended) on a Windows machine with Node 20+ and Python 3.11+. Example:
 
-```bash
-python scripts/prepare_windows_release.py
+```powershell
+pwsh ./scripts/build_windows.ps1 -Mode all -UseVendor -MakeInstaller
 ```
 
-Share the resulting ZIP with Windows testers. Inside they’ll find:
+What the script does:
 
-- `run_app.bat` / `run_app.ps1` – create a venv, install dependencies, run `uvicorn`.
-- `backend/` – FastAPI app + requirements.
-- `frontend/dist/` – prebuilt SPA served directly by FastAPI (no Node needed).
-- `README_WINDOWS.md` – instructions covering Tesseract/Poppler prerequisites.
+- builds the Vite frontend (`npm ci && npm run build`)
+- optionally provisions `vendor/tesseract` and `vendor/poppler` via Chocolatey (`-UseVendor`)
+- runs `scripts/prepare_windows_release.py` to create `release/windows/bank-csv.zip`
+- executes the PyInstaller spec to produce `dist/BankCSV/BankCSV.exe`
+- calls Inno Setup when available (`-MakeInstaller`)
+- signs the `.exe` / installer with `signtool` when `-SignArtifacts -CertificatePath <pfx> [-CertificatePassword ...]` is supplied (timestamped via `-TimestampUrl`)
 
-Testers simply unzip, run the batch file, and open http://127.0.0.1:8000/ to use the app.
+Share `release/windows/bank-csv.zip` when you want a Python-required bundle. It now includes the OCR binaries under `vendor/`, so Windows testers only need Python 3.11+ before running `run_app.bat` (which opens http://127.0.0.1:8020/ automatically). `scripts/prepare_windows_release.py` remains available if you want to invoke it manually, but the PowerShell helper already calls it.
 
 ### “One-click” Windows executable
 
-For friends who prefer double-clicking a single `.exe`, bundle the native OCR binaries directly:
+`BankCSV.exe` (PyInstaller output) embeds the backend, frontend build, Python runtime, and the vendored OCR tools. Double-clicking it launches the server + browser with no prerequisites. Bundle the Inno Setup installer (`release/windows/BankCSV-Setup.exe`) if you need an install wizard, desktop shortcuts, etc.
 
-1. Download the Windows Tesseract build (with Spanish data) and copy the whole folder into `vendor/tesseract/`.
-2. Download the Poppler ZIP, extract it, and copy the folder into `vendor/poppler/` (keep the `bin/` directory intact).
-3. On a Windows box:
+### Code signing
+
+To avoid SmartScreen warnings, provide a code-signing certificate (ideally EV) and let the build script sign artifacts:
 
 ```powershell
-# once per machine
-pip install pyinstaller
-npm install
-npm run build
-
-# bundle backend, frontend/dist, Input/, and vendor binaries into BankCSV.exe
-pyinstaller packaging/windows/bank_csv.spec --noconfirm
+pwsh ./scripts/build_windows.ps1 -Mode exe -UseVendor `
+  -SignArtifacts -CertificatePath C:\certs\bankcsv.pfx `
+  -CertificatePassword 'your-password'
 ```
 
-You’ll get `dist/BankCSV/BankCSV.exe`, which launches the embedded FastAPI server (via `launcher.py`), opens the default browser to http://127.0.0.1:8020/, and serves the built GUI with no terminal interaction. You still need to distribute the external Tesseract/Poppler installers alongside clear instructions, but the Python runtime is fully packaged.
+Use `-TimestampUrl` to target a different TSA if needed.
 
-Prefer not to build locally? Trigger the **`windows-build`** GitHub Actions workflow (manual `workflow_dispatch`). It runs on a Windows runner, installs Tesseract/Poppler via Chocolatey, copies them into `vendor/`, builds the frontend, runs PyInstaller, and publishes `BankCSV.exe` as an artifact you can download from the workflow run.
+### GitHub Actions workflow
+
+The `windows-build` workflow mirrors the local script. Add two repository secrets, `SIGNING_CERT_B64` (base64-encoded `.pfx`) and `SIGNING_CERT_PASSWORD`, to enable signing in CI. The action will:
+
+1. Build the frontend
+2. Fetch/install Tesseract + Poppler via Chocolatey and copy them into `vendor/`
+3. Produce the ZIP, PyInstaller folder, and installer
+4. Sign artifacts when secrets are present
+5. Upload everything as a single artifact called **BankCSV-windows**
+
+> **Tip:** After every release, spin up a clean Windows VM, run the installer or EXE, upload the sample files in `Input/`, and confirm the OCR notes look healthy before sharing the build.
 
 ## Testing with sample data
 

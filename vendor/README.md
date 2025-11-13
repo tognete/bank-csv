@@ -7,6 +7,12 @@ To ship a completely self-contained Windows executable, bundle the native tools 
 | **Tesseract OCR** (UB Mannheim build) | `vendor/tesseract/` | Copy the entire installation directory (keep `tesseract.exe` in the root and the `tessdata/` subfolder). Include any additional language data you need. |
 | **Poppler for Windows** | `vendor/poppler/` | Copy the extracted Poppler folder (must contain `bin/pdftoppm.exe`). |
 
-Once these folders contain the binaries, PyInstaller (see `packaging/windows/bank_csv.spec`) will embed them in the final `BankCSV.exe`. The launcher automatically prepends these directories to `PATH` and sets `TESSDATA_PREFIX`, so no manual installation is required on the target machine.
+Once these folders contain the binaries, `scripts/build_windows.ps1 -UseVendor` will bundle them into:
 
-> ⚠️ Make sure you comply with the upstream licenses (Apache 2.0 for Tesseract, GPL for Poppler) and ship their license files alongside your executable if required.
+- `release/windows/bank-csv.zip` (Python-required bundle)
+- `dist/BankCSV/BankCSV.exe` (PyInstaller)
+- `release/windows/BankCSV-Setup.exe` (when `iscc` is available)
+
+`launcher.py` automatically prepends the vendor paths to `PATH` and sets `TESSDATA_PREFIX`, so nothing needs to be installed globally on the target PC.
+
+> ⚠️ Make sure you comply with the upstream licenses (Apache 2.0 for Tesseract, GPL for Poppler). Keep their `LICENSE` files inside the corresponding vendor folders so they ship with every release, and mention them in your release notes if required.

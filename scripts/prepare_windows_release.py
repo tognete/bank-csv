@@ -5,6 +5,7 @@ Builds the frontend, copies runtime assets, and creates a Windows-friendly bundl
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -16,6 +17,11 @@ INPUT_DIR = REPO_ROOT / "Input"
 PACKAGING_DIR = REPO_ROOT / "packaging" / "windows"
 RELEASE_ROOT = REPO_ROOT / "release" / "windows"
 TARGET_DIR = RELEASE_ROOT / "bank-csv"
+VENDOR_DIR = REPO_ROOT / "vendor"
+VENDOR_TARGETS = {
+    "tesseract": "tesseract.exe",
+    "poppler": str(Path("bin") / "pdftoppm.exe"),
+}
 
 
 def run(cmd: list[str], cwd: Path | None = None):
@@ -56,10 +62,26 @@ def prepare_release_folder():
     if INPUT_DIR.exists():
         copy_tree(INPUT_DIR, TARGET_DIR / "Input")
 
-    # Helper scripts and README for Windows testers.
+    # Helper scripts, launcher, and README for Windows testers.
     shutil.copy(PACKAGING_DIR / "README_WINDOWS.md", TARGET_DIR / "README_WINDOWS.md")
     shutil.copy(PACKAGING_DIR / "run_app.bat", TARGET_DIR / "run_app.bat")
     shutil.copy(PACKAGING_DIR / "run_app.ps1", TARGET_DIR / "run_app.ps1")
+    shutil.copy(REPO_ROOT / "launcher.py", TARGET_DIR / "launcher.py")
+
+    bundling_vendor = False
+    for name, marker in VENDOR_TARGETS.items():
+        source = VENDOR_DIR / name
+        if not source.exists():
+            continue
+        if not (source / marker).exists():
+            continue
+        copy_tree(source, TARGET_DIR / "vendor" / name)
+        bundling_vendor = True
+
+    if bundling_vendor:
+        print("Vendor binaries copied into release bundle.")
+    else:
+        print("Vendor binaries missing; Windows testers must install Tesseract/Poppler manually.")
 
 
 def make_zip():
@@ -70,7 +92,15 @@ def make_zip():
 
 
 def main():
-    build_frontend()
+    skip_frontend_build = os.environ.get("SKIP_FRONTEND_BUILD") == "1"
+    dist_dir = FRONTEND_DIR / "dist"
+    if not skip_frontend_build:
+        build_frontend()
+    elif not dist_dir.exists():
+        raise SystemExit(
+            "frontend/dist missing. Run npm run build first or unset SKIP_FRONTEND_BUILD."
+        )
+
     prepare_release_folder()
     make_zip()
 

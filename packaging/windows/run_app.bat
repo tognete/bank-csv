@@ -13,8 +13,8 @@ call .venv\Scripts\python -m pip install --upgrade pip >nul
 call .venv\Scripts\python -m pip install -r backend\requirements.txt || goto :error
 
 set PYTHONPATH=%ROOT%backend
-echo Starting Bank CSV Extractor at http://127.0.0.1:8000/
-call .venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000
+echo Starting Bank CSV Extractor (auto-opens browser at http://127.0.0.1:8020/)
+call .venv\Scripts\python "%ROOT%launcher.py"
 goto :eof
 
 :error

@@ -13,5 +13,5 @@ if (-Not (Test-Path ".venv")) {
 & .\.venv\Scripts\python -m pip install -r .\backend\requirements.txt
 
 $env:PYTHONPATH = Join-Path $root "backend"
-Write-Host "Starting Bank CSV Extractor at http://127.0.0.1:8000/ (Ctrl+C to stop)"
-& .\.venv\Scripts\uvicorn app.main:app --host 0.0.0.0 --port 8000
+Write-Host "Starting Bank CSV Extractor (auto-opens browser at http://127.0.0.1:8020/)"
+& .\.venv\Scripts\python "$root\launcher.py"
