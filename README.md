@@ -1,6 +1,6 @@
 # Bank CSV Extractor
 
-Turn PDF statements and screenshots into CSVs with a FastAPI backend and a Vite/React GUI that you can iterate on throughout development.
+Turn PDF statements and screenshots of tables into CSVs with a FastAPI backend and a Vite/React GUI that you can iterate on throughout development.
 
 ## Project layout
 
